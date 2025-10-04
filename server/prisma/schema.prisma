@@ -21,7 +21,6 @@ enum Role {
 
 enum CourseStatus {
   PENDING
-  APPROVED
   PUBLISHED
 }
 
@@ -73,24 +72,37 @@ model Lesson {
   createdAt  DateTime @default(now())
 
   // Relations
-  course   Course @relation(fields: [courseId], references: [id])
-  courseId Int
+  course           Course             @relation(fields: [courseId], references: [id])
+  courseId         Int
+  EnrollmentLesson EnrollmentLesson[]
 
   @@unique([courseId, order])
 }
 
 model Enrollment {
-  id          Int          @id @default(autoincrement())
-  user        User         @relation(fields: [userId], references: [id])
-  userId      Int
-  course      Course       @relation(fields: [courseId], references: [id])
-  courseId    Int
-  progress    Float        @default(0)
-  completed   Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  certificate Certificate? // One-to-one
+  id                Int                @id @default(autoincrement())
+  user              User               @relation(fields: [userId], references: [id])
+  userId            Int
+  course            Course             @relation(fields: [courseId], references: [id])
+  courseId          Int
+  progress          Float              @default(0) // calculated dynamically
+  completed         Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  enrollmentLessons EnrollmentLesson[]
+  certificate       Certificate?
 
   @@unique([userId, courseId])
+}
+
+model EnrollmentLesson {
+  id           Int        @id @default(autoincrement())
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId Int
+  lesson       Lesson     @relation(fields: [lessonId], references: [id])
+  lessonId     Int
+  completed    Boolean    @default(false)
+
+  @@unique([enrollmentId, lessonId])
 }
 
 model Certificate {
