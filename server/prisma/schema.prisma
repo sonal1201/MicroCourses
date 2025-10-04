@@ -12,3 +12,86 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+
+enum Role {
+  LEARNER
+  CREATOR
+  ADMIN
+}
+
+enum CourseStatus {
+  PENDING
+  APPROVED
+  PUBLISHED
+}
+
+//user can be --> admin or student or creator
+
+model User {
+  id          Int          @id @default(autoincrement())
+  name        String
+  email       String       @unique
+  password    String
+  role        Role         @default(LEARNER)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  courses     Course[]     @relation("CreatorCourses") // courses created by this user (if Creator)
+  enrollments Enrollment[] // courses enrolled (if Learner)
+}
+
+model Course {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String
+  thumbnail   String?
+  status      CourseStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  creator     User         @relation("CreatorCourses", fields: [creatorId], references: [id])
+  creatorId   Int
+  lessons     Lesson[]
+  enrollments Enrollment[]
+}
+
+model Lesson {
+  id          Int       @id @default(autoincrement())
+  title       String
+  contentUrl  String     // Video  link
+  order       Int
+  transcript  String?    // Auto-generated transcript text
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  course      Course     @relation(fields: [courseId], references: [id])
+  courseId    Int
+
+  @@unique([courseId, order]) 
+}
+
+model Enrollment {
+  id          Int          @id @default(autoincrement())
+  user        User         @relation(fields: [userId], references: [id])
+  userId      Int
+  course      Course       @relation(fields: [courseId], references: [id])
+  courseId    Int
+  progress    Float        @default(0)
+  completed   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  certificate Certificate? // One-to-one
+
+  @@unique([userId, courseId])
+}
+
+
+model Certificate {
+  id            Int         @id @default(autoincrement())
+  enrollment    Enrollment  @relation(fields: [enrollmentId], references: [id])
+  enrollmentId  Int         @unique 
+  serialHash    String      @unique
+  issuedAt      DateTime    @default(now())
+}
