@@ -13,7 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 enum Role {
   LEARNER
   CREATOR
@@ -26,16 +25,23 @@ enum CourseStatus {
   PUBLISHED
 }
 
+enum Approval {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 //user can be --> admin or student or creator
 
 model User {
-  id          Int          @id @default(autoincrement())
-  name        String
-  email       String       @unique
-  password    String
-  role        Role         @default(LEARNER)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                    Int      @id @default(autoincrement())
+  name                  String
+  email                 String   @unique
+  password              String
+  role                  Role     @default(LEARNER)
+  creatorApprovalStatus Approval @default(PENDING)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   // Relations
   courses     Course[]     @relation("CreatorCourses") // courses created by this user (if Creator)
@@ -59,18 +65,18 @@ model Course {
 }
 
 model Lesson {
-  id          Int       @id @default(autoincrement())
-  title       String
-  contentUrl  String     // Video  link
-  order       Int
-  transcript  String?    // Auto-generated transcript text
-  createdAt   DateTime   @default(now())
+  id         Int      @id @default(autoincrement())
+  title      String
+  contentUrl String // Video  link
+  order      Int
+  transcript String? // Auto-generated transcript text
+  createdAt  DateTime @default(now())
 
   // Relations
-  course      Course     @relation(fields: [courseId], references: [id])
-  courseId    Int
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId Int
 
-  @@unique([courseId, order]) 
+  @@unique([courseId, order])
 }
 
 model Enrollment {
@@ -87,11 +93,10 @@ model Enrollment {
   @@unique([userId, courseId])
 }
 
-
 model Certificate {
-  id            Int         @id @default(autoincrement())
-  enrollment    Enrollment  @relation(fields: [enrollmentId], references: [id])
-  enrollmentId  Int         @unique 
-  serialHash    String      @unique
-  issuedAt      DateTime    @default(now())
+  id           Int        @id @default(autoincrement())
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId Int        @unique
+  serialHash   String     @unique
+  issuedAt     DateTime   @default(now())
 }
